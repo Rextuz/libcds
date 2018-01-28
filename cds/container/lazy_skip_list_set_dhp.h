@@ -198,6 +198,14 @@ namespace cds { namespace container {
             }
         }
 
+        int size() {
+            return 0;
+        }
+
+        void erase(std::string str) {
+
+        }
+
     protected:
         void destroy() {
             node_type *p = m_Head; //->next(0).load(atomics::memory_order_relaxed).ptr();
