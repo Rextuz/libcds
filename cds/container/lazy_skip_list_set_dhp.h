@@ -10,23 +10,24 @@ namespace cds { namespace container {
     template <
         typename GC,
         typename T,
-        typename Traits = lazy_skip_list_set::traits
+        typename Traits = skip_list::traits
     >
-    class LazySkipListSet
+    class SkipListSet
     {
     public:
-        typedef GC      gc;
+        typedef cds::gc::DHP      gc;
         typedef T       value_type;
         typedef Traits  traits;
 
-        static size_t const c_nMaxHeight = cds::container::lazy_skip_list_set::c_nMaxHeight;
-        // static size_t const c_nHazardPtrCount = c_nMaxHeight * 2 + 3;
+        static size_t const c_nMaxHeight = cds::container::skip_list::c_nMaxHeight;
+        static size_t const c_nHazardPtrCount = 0;
 
         typedef typename traits::random_level_generator rand_height;
 
     protected:
-        typedef cds::container::lazy_skip_list_set::node<gc, value_type> node_type;
+        typedef cds::container::skip_list::node<gc, value_type> node_type;
         typedef typename node_type::key_type key_type;
+        typedef skip_list::details::iterator<GC, T> iterator;
 
         typedef cds::details::marked_ptr<node_type, 1> marked_ptr;
 
@@ -34,7 +35,7 @@ namespace cds { namespace container {
         node_type *m_Tail;
 
     public:
-        LazySkipListSet() {
+        SkipListSet() {
             m_Head = node_type::min_key();
             m_Tail = node_type::max_key();
 
@@ -42,8 +43,21 @@ namespace cds { namespace container {
                 m_Head->next(layer).store(marked_ptr(m_Tail), traits::memory_model::memory_order_relaxed);
         }
 
-        ~LazySkipListSet() {
+        ~SkipListSet() {
             destroy();
+        }
+
+        iterator begin() {
+            return iterator(m_Head);
+        }
+
+        iterator end() {
+            key_type key = m_Tail->node_key();
+            node_type *preds[c_nMaxHeight];
+            node_type *succs[c_nMaxHeight];
+            int lFound = find(key, preds, succs);
+
+            return iterator(preds[0]);
         }
 
         bool insert(value_type v) {
@@ -168,19 +182,22 @@ namespace cds { namespace container {
             }
         }
 
-        bool contains(value_type v) {
+        value_type contains(value_type &v) {
             key_type key = std::hash<value_type>{}(v);
             node_type *preds[c_nMaxHeight];
             node_type *succs[c_nMaxHeight];
             int lFound = find(key, preds, succs);
 
             if (lFound == -1)
-                return false;
+                return nullptr;
 
             bool linked = succs[lFound]->fully_linked();
             bool marked = succs[lFound]->marked();
 
-            return (linked && !marked);
+            if (linked && !marked)
+                return v;
+
+            return nullptr;
         }
 
         bool empty() {
@@ -196,6 +213,10 @@ namespace cds { namespace container {
                 else
                     return false;
             }
+        }
+
+        size_t size() {
+            return 0;
         }
 
     protected:

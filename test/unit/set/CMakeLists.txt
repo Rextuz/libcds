@@ -81,7 +81,7 @@ add_test(NAME ${UNIT_SET_SKIP} COMMAND ${UNIT_SET_SKIP} WORKING_DIRECTORY ${EXEC
 set(UNIT_SET_LAZY_SKIP unit-set-lazy-skip)
 set(UNIT_SET_LAZY_SKIP_SOURCES
     ../main.cpp
-    lazyskiplist_dhp.cpp
+    lazy_skiplist.cpp
 )
 add_executable(${UNIT_SET_LAZY_SKIP} ${UNIT_SET_LAZY_SKIP_SOURCES})
 target_link_libraries(${UNIT_SET_LAZY_SKIP} ${CDS_TEST_LIBRARIES})
